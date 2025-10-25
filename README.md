@@ -65,6 +65,42 @@ npm run build
 npm run preview
 ```
 
+## Netlifyへのデプロイ
+
+### 1. GitHubリポジトリと連携
+
+1. [Netlify](https://www.netlify.com/) にログイン
+2. 「New site from Git」をクリック
+3. GitHubリポジトリを選択
+4. ビルド設定を確認（自動検出されます）
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+
+### 2. 環境変数の設定（重要！）
+
+Netlifyダッシュボードで環境変数を設定する必要があります：
+
+1. Site settings → Environment variables に移動
+2. 「Add a variable」をクリック
+3. 以下の変数を追加：
+   - **Key**: `VITE_GEMINI_API_KEY`
+   - **Value**: あなたのGemini APIキー
+
+### 3. デプロイ
+
+設定が完了すると、自動的にデプロイが開始されます。
+GitHubにプッシュするたびに自動デプロイされます。
+
+### トラブルシューティング（Netlify）
+
+#### ビルドエラー
+- 環境変数 `VITE_GEMINI_API_KEY` が設定されているか確認
+- Netlifyのビルドログを確認
+
+#### APIが動作しない
+- ブラウザのコンソールを開いてエラーを確認
+- 「Gemini APIキーが設定されていません」と表示される場合、Netlifyの環境変数を確認
+
 ## 使い方
 
 ### 初回使用時

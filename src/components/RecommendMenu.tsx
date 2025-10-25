@@ -42,8 +42,9 @@ export function RecommendMenu({ currentUser }: Props) {
         const analysisResult = await GeminiService.analyzeMenuAndRecommend(base64, brands);
         setResult(analysisResult);
       } catch (err) {
-        setError('メニューの解析に失敗しました');
-        console.error(err);
+        const errorMessage = err instanceof Error ? err.message : 'メニューの解析に失敗しました';
+        setError(errorMessage);
+        console.error('メニュー解析エラー:', err);
       } finally {
         setLoading(false);
       }

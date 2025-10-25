@@ -45,8 +45,9 @@ export function RegisterBrand({ onBrandAdded, currentUser }: Props) {
       setBrandName('');
       onBrandAdded();
     } catch (err) {
-      setError('銘柄の登録に失敗しました');
-      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : '銘柄の登録に失敗しました';
+      setError(errorMessage);
+      console.error('銘柄登録エラー:', err);
     } finally {
       setLoading(false);
     }

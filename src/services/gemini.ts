@@ -3,6 +3,11 @@ import { FlavorProfile, SakeBrand, MenuAnalysisResult } from '../types';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
+// APIキーのチェック
+if (!API_KEY) {
+  console.error('⚠️ VITE_GEMINI_API_KEY が設定されていません');
+}
+
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const GeminiService = {
@@ -12,6 +17,10 @@ export const GeminiService = {
     region?: string;
     flavorProfile: FlavorProfile;
   }> {
+    if (!API_KEY) {
+      throw new Error('Gemini APIキーが設定されていません。環境変数 VITE_GEMINI_API_KEY を設定してください。');
+    }
+
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
     const prompt = `あなたは日本酒の専門家です。以下の日本酒の銘柄について、正確な情報を提供してください。
@@ -64,6 +73,10 @@ export const GeminiService = {
     imageBase64: string,
     userBrands: SakeBrand[]
   ): Promise<MenuAnalysisResult> {
+    if (!API_KEY) {
+      throw new Error('Gemini APIキーが設定されていません。環境変数 VITE_GEMINI_API_KEY を設定してください。');
+    }
+
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
     const userPreferences = userBrands.map(brand => {
