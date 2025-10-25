@@ -10,6 +10,51 @@ if (!API_KEY) {
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
+// モデルの優先順位リスト（新しいモデル → 安定版にフォールバック）
+const MODELS = [
+  'gemini-2.0-flash-exp',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro'
+];
+
+// リトライ付きでモデルを取得
+async function getModelWithRetry() {
+  for (const modelName of MODELS) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      return { model, modelName };
+    } catch (error) {
+      console.warn(`モデル ${modelName} の取得に失敗しました。次のモデルを試します。`);
+      continue;
+    }
+  }
+  throw new Error('利用可能なモデルがありません');
+}
+
+// API呼び出しをリトライする
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000
+): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      const isOverloaded = error?.message?.includes('overloaded') || error?.message?.includes('503');
+      const isLastRetry = i === maxRetries - 1;
+
+      if (isOverloaded && !isLastRetry) {
+        console.warn(`APIが過負荷です。${delayMs}ms後に再試行します... (${i + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delayMs * (i + 1)));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error('リトライ上限に達しました');
+}
+
 export const GeminiService = {
   async analyzeSakeBrand(brandName: string): Promise<{
     identifiedName: string;
@@ -21,7 +66,8 @@ export const GeminiService = {
       throw new Error('Gemini APIキーが設定されていません。環境変数 VITE_GEMINI_API_KEY を設定してください。');
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const { model, modelName } = await getModelWithRetry();
+    console.log(`使用モデル: ${modelName}`);
 
     const prompt = `あなたは日本酒の専門家です。以下の日本酒の銘柄について、正確な情報を提供してください。
 
@@ -44,16 +90,18 @@ export const GeminiService = {
 ※該当する銘柄が見つからない場合は、入力された名前をそのまま使用し、一般的な日本酒の特徴を設定してください。`;
 
     try {
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+      return await retryWithBackoff(async () => {
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
 
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return parsed;
-      }
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return parsed;
+        }
 
-      throw new Error('Invalid response format');
+        throw new Error('Invalid response format');
+      });
     } catch (error) {
       console.error('Error analyzing sake brand:', error);
       return {
@@ -77,7 +125,8 @@ export const GeminiService = {
       throw new Error('Gemini APIキーが設定されていません。環境変数 VITE_GEMINI_API_KEY を設定してください。');
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const { model, modelName } = await getModelWithRetry();
+    console.log(`使用モデル (Vision): ${modelName}`);
 
     const userPreferences = userBrands.map(brand => {
       const fp = brand.flavorProfile;
@@ -117,25 +166,27 @@ ${userPreferences}
 }`;
 
     try {
-      const result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            mimeType: 'image/jpeg',
-            data: imageBase64
+      return await retryWithBackoff(async () => {
+        const result = await model.generateContent([
+          prompt,
+          {
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: imageBase64
+            }
           }
+        ]);
+
+        const text = result.response.text();
+
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return parsed;
         }
-      ]);
 
-      const text = result.response.text();
-
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return parsed;
-      }
-
-      throw new Error('Invalid response format');
+        throw new Error('Invalid response format');
+      });
     } catch (error) {
       console.error('Error analyzing menu:', error);
       throw error;
