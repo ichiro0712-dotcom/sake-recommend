@@ -3,6 +3,13 @@ import { MenuAnalysisResult, User } from '../types';
 import { GeminiService } from '../services/gemini';
 import { StorageService } from '../services/storage';
 
+// HTML input要素のcapture属性の型定義を拡張
+declare module 'react' {
+  interface InputHTMLAttributes<T> extends HTMLAttributes<T> {
+    capture?: boolean | 'user' | 'environment';
+  }
+}
+
 interface Props {
   currentUser: User;
 }
@@ -103,6 +110,7 @@ export function RecommendMenu({ currentUser }: Props) {
           id="image-upload"
           type="file"
           accept="image/*"
+          capture="environment"
           onChange={handleImageUpload}
           disabled={loading}
           style={{ display: 'none' }}
