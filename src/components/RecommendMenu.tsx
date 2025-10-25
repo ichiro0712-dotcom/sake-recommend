@@ -88,23 +88,24 @@ export function RecommendMenu({ currentUser }: Props) {
         メニューを撮影
       </h2>
 
-      <div style={{ marginBottom: '30px' }}>
+      <div style={{ marginBottom: '30px', textAlign: 'center' }}>
         <label
           htmlFor="image-upload"
           style={{
             display: 'inline-block',
             padding: '16px 32px',
-            fontSize: '16px',
+            fontSize: '18px',
             fontWeight: 'bold',
             color: '#fff',
             backgroundColor: '#2E5FAC',
             border: 'none',
             borderRadius: '12px',
             cursor: 'pointer',
-            textAlign: 'center'
+            textAlign: 'center',
+            boxShadow: '0 4px 6px rgba(46, 95, 172, 0.3)'
           }}
         >
-          📸 画像を選択
+          📸 メニューを撮影
         </label>
         <input
           id="image-upload"
@@ -238,6 +239,42 @@ export function RecommendMenu({ currentUser }: Props) {
                 }}>
                   {rec.reason}
                 </p>
+
+                {rec.similarToBrands && rec.similarToBrands.length > 0 && (
+                  <div style={{
+                    backgroundColor: '#E8F0FC',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    marginBottom: '12px',
+                    border: '1px solid #2E5FAC'
+                  }}>
+                    <p style={{
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      color: '#2E5FAC',
+                      marginBottom: '6px'
+                    }}>
+                      💡 あなたの好きな銘柄と似ています
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {rec.similarToBrands.map((brand, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#fff',
+                            color: '#2E5FAC',
+                            fontSize: '12px',
+                            borderRadius: '8px',
+                            fontWeight: '600'
+                          }}
+                        >
+                          {brand}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
                   {rec.characteristics.map((char, i) => (

@@ -29,6 +29,7 @@ export interface RecommendedSake {
   reason: string;
   flavorProfile: FlavorProfile;
   characteristics: string[];
+  similarToBrands: string[]; // ユーザーの登録銘柄のうち、似ている銘柄名
 }
 
 export interface MenuAnalysisResult {
